@@ -1,0 +1,259 @@
+﻿@model IEnumerable<WaterPlant.Models.Plants>
+@{
+    ViewBag.Title = "Home Page";
+}
+
+    <div class="site-section">
+
+        <div class="container">
+            <div class="row justify-content-center mb-5">
+                <div class="col-md-7 text-center">
+                    <h2 class="font-weight-light text-black">Our Plants</h2>
+
+                </div>
+            </div>
+
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <td>
+                            Name
+                        </td>
+                        <td>Image</td>
+                        <td>Status</td>
+
+                        <td>Last Watered</td>
+                        <td>Six hours</td>
+                        <td>Action</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in Model)
+                    {
+                    <tr>
+                        <td>@p.Name</td>
+                        <td><img src="@p.ImageUrl" alt="Image" style="max-height:200px;max-width:120px" class="img-fluid" /></td>
+                        <td class="status">@p.Status</td>
+                        <td class="lastwater">@p.LastWatered</td>
+                        <td>
+                            @{
+                                double dt = (DateTime.Now - p.LastWatered).Value.TotalSeconds;
+                            }
+                            @if(dt>21600 && p.Status=="Watered")
+                            {
+                               <p>Last watered six hours before</p>
+                            }
+                        </td>
+                        <td>
+                            @if (p.Status == "Watered")
+                            {
+                                <button class="btn btn-sm btn-primary btnstart" data-id="@p.Id" id="btnstart">Start</button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-sm btn-primary btnstop" data-id="@p.Id" id="btnstop">Stop</button>
+                            }
+
+                            <button class="btn btn-sm btn-primary d-none btnstart1" data-id="@p.Id" id="btnstart1">Start</button>
+
+                            <button class="btn btn-sm btn-primary d-none btnstop1" data-id="@p.Id" id="btnstop1">Stop</button>
+
+                        </td>
+                        
+                    </tr>
+                    }
+
+                </tbody>
+            </table>
+            
+        </div>
+
+    </div>
+    <script src="~/Scripts/jquery-3.3.1.js"></script>
+<script>
+
+    //javascript function for start watering when page reload or first time started
+
+    $(document).on("click", "#btnstart", function () {
+        var plantid = $(this).data("id");
+        var st = $(this).closest("tr").find(".status");
+        var time = $(this).closest("tr").find(".lastwater");
+        var startbtn = $(this).closest("tr").find(".btnstart");
+        var startbtn1 = $(this).closest("tr").find(".btnstart1");
+        var stopbtn = $(this).closest("tr").find(".btnstop");
+        var stopbtn1 = $(this).closest("tr").find(".btnstop1");
+        $.ajax({
+            type: "GET",
+            url: '@Url.Action("GetLastTime", "Home")',
+            data: {
+                "plantid": plantid
+
+            },
+            success: function (data) {
+                if (data == true) {
+                    $.ajax({
+                        type: "POST",
+                        url: '@Url.Action("Watering", "Home")',
+                        data: {
+                            "plantid": plantid
+
+                        },
+                        success: function (data) {
+
+                            startbtn.addClass("d-none");
+                            
+                            st.text(data.Status);
+                            time.text(data.Time);
+                            startbtn.addClass("d-none");
+                            //stopbtn.removeClass("d-none");
+                               setTimeout(function () {
+                                    stopbtn1.removeClass("d-none");     
+                            }, 10000);
+                            //window.location.reload();
+
+
+                        }
+
+                    });
+                }
+                else {
+                    alert("You can not before 30 seconds");
+                }
+
+                //$(this).closest("tr").find(".status").text("abc");
+            }
+
+        });
+    });
+
+    //javascript function for start watering when page reload or first time started if status is watering
+    $(document).on("click", "#btnstop", function () {
+       var plantid = $(this).data("id");
+        var st = $(this).closest("tr").find(".status");
+        var time = $(this).closest("tr").find(".lastwater");
+        var startbtn = $(this).closest("tr").find(".btnstart");
+        var startbtn1 = $(this).closest("tr").find(".btnstart1");
+        var stopbtn = $(this).closest("tr").find(".btnstop");
+        var stopbtn1 = $(this).closest("tr").find(".btnstop1");
+
+        //alert(st);
+        //st.text("text");
+        $.ajax({
+                type: "POST",
+                url: '@Url.Action("WateringStop", "Home")',
+            data: {
+                "plantid": plantid
+                    
+                },
+            success: function (data) {
+
+                startbtn1.removeClass("d-none");
+                stopbtn.addClass("d-none");
+                  st.text(data.Status);
+                    time.text(data.Time);
+                    startbtn.removeClass("d-none");
+                    stopbtn.addClass("d-none");
+            //    setTimeout(function () {
+            //        stopbtn.removeClass("d-none");      
+            //}, 10000);
+                    //window.location.reload();
+
+                    
+                }
+
+            });
+        //$(this).closest("tr").find(".status").text("abc");
+
+       
+    });
+
+    //javascript function for start watering when page remained open
+    $(document).on("click", "#btnstart1", function () {
+        var plantid = $(this).data("id");
+        var st = $(this).closest("tr").find(".status");
+        var time = $(this).closest("tr").find(".lastwater");
+        var startbtn = $(this).closest("tr").find(".btnstart");
+        var startbtn1 = $(this).closest("tr").find(".btnstart1");
+        var stopbtn = $(this).closest("tr").find(".btnstop");
+        var stopbtn1 = $(this).closest("tr").find(".btnstop1");
+        $.ajax({
+            type: "GET",
+            url: '@Url.Action("GetLastTime", "Home")',
+            data: {
+                "plantid": plantid
+
+            },
+            success: function (data) {
+                if (data == true) {
+                    $.ajax({
+                        type: "POST",
+                        url: '@Url.Action("Watering", "Home")',
+                        data: {
+                            "plantid": plantid
+
+                        },
+                        success: function (data) {
+
+                            startbtn1.addClass("d-none");
+                            //stopbtn1.removeClass("d-none");
+                            st.text(data.Status);
+                            time.text(data.Time);
+                            startbtn.addClass("d-none");
+                            //stopbtn.removeClass("d-none");
+                               setTimeout(function () {
+                                    stopbtn1.removeClass("d-none");      
+                            }, 10000);
+                            //window.location.reload();
+
+
+                        }
+
+                    });
+                }
+                else {
+                    alert("You can not before 30 seconds");
+                }
+
+                //$(this).closest("tr").find(".status").text("abc");
+            }
+
+        });
+    });
+    //javascript function for start watering when page remained open
+    $(document).on("click", "#btnstop1", function () {
+       var plantid = $(this).data("id");
+        var st = $(this).closest("tr").find(".status");
+        var time = $(this).closest("tr").find(".lastwater");
+        var startbtn = $(this).closest("tr").find(".btnstart");
+        var startbtn1 = $(this).closest("tr").find(".btnstart1");
+        var stopbtn = $(this).closest("tr").find(".btnstop");
+        var stopbtn1 = $(this).closest("tr").find(".btnstop1");
+
+        //alert(st);
+        //st.text("text");
+        $.ajax({
+                type: "POST",
+                url: '@Url.Action("WateringStop", "Home")',
+            data: {
+                "plantid": plantid
+                    
+                },
+            success: function (data) {
+
+                startbtn1.removeClass("d-none");
+                //stopbtn.addClass("d-none");
+                  st.text(data.Status);
+                    time.text(data.Time);
+                    //startbtn.removeClass("d-none");
+                    stopbtn1.addClass("d-none");
+            
+
+                    
+                }
+
+            });
+        
+
+       
+    });
+</script>
